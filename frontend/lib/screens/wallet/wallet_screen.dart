@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:ipay/services/auth_service.dart';
 import 'package:ipay/services/razorpay_service.dart';
 import 'package:ipay/services/wallet_service.dart';
-import 'package:ipay/widgets/bottom_navigation_bar.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:iconsax/iconsax.dart';
 
@@ -615,15 +614,6 @@ class _WalletScreenState extends State<WalletScreen> with TickerProviderStateMix
                   );
                 },
               ),
-      ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: 2, // Wallet tab
-        onTap: (index) {
-          if (index != 2) {
-            Navigator.pop(context);
-          }
-        },
-        cartItemCount: 0,
       ),
     );
   }

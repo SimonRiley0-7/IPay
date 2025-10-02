@@ -5,7 +5,6 @@ import 'package:ipay/services/cloudinary_service.dart';
 import 'package:ipay/services/cart_service.dart';
 import 'package:ipay/services/wallet_service.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:ipay/widgets/bottom_navigation_bar.dart';
 import 'package:ipay/screens/wallet/wallet_screen.dart';
 import 'package:ipay/screens/orders/orders_screen.dart';
 import 'package:ipay/screens/auth/login_screen.dart';
@@ -744,15 +743,6 @@ class _ProfileScreenState extends State<ProfileScreen> with TickerProviderStateM
                   );
                 },
               ),
-      ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: 4, // Profile tab
-        onTap: (index) {
-          if (index != 4) {
-            Navigator.pop(context);
-          }
-        },
-        cartItemCount: 0,
       ),
     );
   }
