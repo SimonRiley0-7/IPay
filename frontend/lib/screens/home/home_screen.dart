@@ -14,7 +14,6 @@ import 'package:ipay/screens/wallet/wallet_screen.dart';
 import 'package:ipay/screens/orders/orders_screen.dart';
 import 'package:ipay/screens/orders/order_detail_screen.dart';
 import 'package:ipay/models/order_model.dart';
-import 'package:ipay/widgets/bottom_navigation_bar.dart';
 import 'package:ipay/widgets/logo_widget.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
@@ -126,8 +125,6 @@ class _HomeScreenState extends State<HomeScreen>
   bool _isLoadingOrders = true;
   double _walletBalance = 0.0;
   bool _isLoadingWallet = true;
-  int _currentIndex = 0;
-  int _cartItemCount = 0;
   
   // Cache for order details to avoid repeated API calls
   final Map<String, Map<String, dynamic>> _orderDetailsCache = {};
@@ -356,7 +353,6 @@ class _HomeScreenState extends State<HomeScreen>
       final count = await _cartService.getCartItemCount();
       if (mounted) {
         setState(() {
-          _cartItemCount = count;
         });
       }
     } catch (e) {
@@ -485,39 +481,10 @@ class _HomeScreenState extends State<HomeScreen>
         ),
       ),
       ),
-      bottomNavigationBar: CustomBottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onNavItemTapped,
-        cartItemCount: _cartItemCount,
-      ),
     );
   }
 
 
-  void _onNavItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-
-    // Handle navigation based on index
-    switch (index) {
-      case 0: // Home
-        // Already on home, maybe scroll to top or refresh
-        break;
-      case 1: // Scan
-        _handleScanCode();
-        break;
-      case 2: // Cart
-        _navigateToCart();
-        break;
-      case 3: // Wallet
-        _navigateToWallet();
-        break;
-      case 4: // Profile
-        _navigateToProfile();
-        break;
-    }
-  }
 
   void _handleScanCode() {
     // Navigate to barcode scanner
