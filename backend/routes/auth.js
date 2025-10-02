@@ -49,6 +49,27 @@ const {
 } = require('../utils/googleAuth');
 const twilioService = require('../utils/twilioService');
 
+// @route   GET /api/auth
+// @desc    Get auth service info
+// @access  Public
+router.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'iPay Auth Service',
+    version: '1.0.0',
+    status: 'Running',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      test: '/api/auth/test',
+      google: '/api/auth/google',
+      register: '/api/auth/register',
+      login: '/api/auth/login',
+      verify: '/api/auth/verify',
+      me: '/api/auth/me'
+    }
+  });
+});
+
 // @route   GET /api/auth/test
 // @desc    Test endpoint for mobile connectivity
 // @access  Public
