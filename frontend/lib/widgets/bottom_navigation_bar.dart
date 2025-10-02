@@ -39,25 +39,16 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
   final CartService _cartService = CartService();
   int _cartItemCount = 0;
   bool _isLoadingCartCount = false;
-  int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.currentIndex;
     _loadCartCount();
   }
 
   @override
   void didUpdateWidget(CustomBottomNavigationBar oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
-    // Update current index when widget updates
-    if (widget.currentIndex != _currentIndex) {
-      setState(() {
-        _currentIndex = widget.currentIndex;
-      });
-    }
     
     // If cartItemCount is provided externally, use it; otherwise load from service
     if (widget.cartItemCount != null) {
@@ -150,17 +141,17 @@ class _CustomBottomNavigationBarState extends State<CustomBottomNavigationBar> {
     required String label,
     required int index,
   }) {
-    final isSelected = _currentIndex == index;
+    final isSelected = widget.currentIndex == index;
     final color = isSelected ? AppTheme.primaryGreen : Colors.grey[600];
     final currentCartCount = widget.cartItemCount ?? _cartItemCount;
     
-    print('🔧 Building nav item: $label (index: $index, isSelected: $isSelected, currentIndex: $_currentIndex)');
+    print('🔧 Building nav item: $label (index: $index, isSelected: $isSelected, currentIndex: ${widget.currentIndex})');
 
     return GestureDetector(
       onTap: () {
         print('🔧 Bottom Nav Item: Tapped $label (index: $index)');
         // Add haptic feedback for better UX
-        if (index != _currentIndex) {
+        if (index != widget.currentIndex) {
           // Only provide feedback when actually changing tabs
           // HapticFeedback.lightImpact(); // Uncomment if you want haptic feedback
         }

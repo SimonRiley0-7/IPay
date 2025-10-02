@@ -40,7 +40,6 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: CustomBottomNavigationBar(
-        key: ValueKey(_currentIndex),
         currentIndex: _currentIndex,
         cartItemCount: _cartItemCount,
         onTap: _onNavItemTapped,
