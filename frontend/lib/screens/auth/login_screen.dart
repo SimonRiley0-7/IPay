@@ -323,9 +323,8 @@ class _LoginScreenState extends State<LoginScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF4A9B8E), // Darker teal at top
-              Color(0xFF5BA8A0), // Medium teal
-              Color(0xFF6BB5A7), // Lighter teal at bottom
+              Color(0xFF2D5A4A), // Darker green at top
+              Color(0xFF4A9B8E), // Lighter green at bottom
             ],
           ),
         ),
@@ -369,61 +368,82 @@ class _LoginScreenState extends State<LoginScreen>
                               
                               const Spacer(),
                               
-                              // Logo section with circular background
+                              // Top text - "SMART SHOPPING IN YOUR HANDS"
+                              Text(
+                                'SMART SHOPPING IN YOUR HANDS',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withOpacity(0.9),
+                                  letterSpacing: 1.2,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              
+                              const SizedBox(height: 40),
+                              
+                              // Main logo container with gradient circle
                               Container(
-                                width: 140,
-                                height: 140,
+                                width: 200,
+                                height: 200,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Colors.white.withOpacity(0.2),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.3),
-                                    width: 2,
+                                  gradient: const RadialGradient(
+                                    center: Alignment.center,
+                                    radius: 0.8,
+                                    colors: [
+                                      Color(0xFF6BB6A8), // Light green center
+                                      Color(0xFF2D5A4A), // Dark green edges
+                                    ],
                                   ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      blurRadius: 30,
+                                      offset: const Offset(0, 15),
+                                    ),
+                                  ],
                                 ),
                                 child: Center(
-                                  child: Container(
-                                    width: 100,
-                                    height: 100,
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.green,
-                                    ),
-                                    child: const Icon(
-                                      Iconsax.shopping_cart,
-                                      color: Colors.white,
-                                      size: 50,
-                                    ),
+                                  child: Image.asset(
+                                    'assets/images/logo.png',
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      // Fallback if logo doesn't exist
+                                      return const Icon(
+                                        Icons.shopping_cart_rounded,
+                                        size: 80,
+                                        color: Colors.white,
+                                      );
+                                    },
                                   ),
                                 ),
                               ),
                               
-                              const SizedBox(height: 20),
+                              const SizedBox(height: 50),
                               
-                              // Tagline
-                              const Text(
-                                'SMART SHOPPING IN YOUR HANDS',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                              
-                              const SizedBox(height: 30),
-                              
-                              // App name
-                              const Text(
+                              // Brand name - "iPAY"
+                              Text(
                                 'iPAY',
                                 style: TextStyle(
                                   fontSize: 36,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFF9500), // Orange color
+                                  color: Colors.white,
                                   letterSpacing: 2,
+                                  shadows: [
+                                    Shadow(
+                                      color: Colors.black.withOpacity(0.3),
+                                      offset: const Offset(0, 2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
                                 ),
+                                textAlign: TextAlign.center,
                               ),
+                              
+                              const SizedBox(height: 30),
                               
                               const Spacer(),
                             ],
