@@ -56,8 +56,8 @@ class AuthService {
     NetworkConfig.printDebugInfo();
     print('🔄 Testing connection to backend...');
     
-    // Try all available URLs
-    final urlsToTry = NetworkConfig.allUrls;
+    // Try all available test URLs (which include /test endpoint)
+    final urlsToTry = NetworkConfig.testUrls;
     
     for (String url in urlsToTry) {
       try {
