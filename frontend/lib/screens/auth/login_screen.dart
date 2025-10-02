@@ -153,22 +153,22 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       print('🚀 Starting Google Sign-In process...');
       
-      // Test connection first
+      // Test connection first (temporarily disabled for debugging)
       print('🔄 Testing backend connection before Google Sign-In...');
-      final connected = await _authService.testConnection();
-      if (!connected) {
-        setState(() {
-          _isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cannot connect to backend server. Please check your connection.'),
-            backgroundColor: Colors.red,
-            duration: Duration(seconds: 5),
-          ),
-        );
-        return;
-      }
+      // final connected = await _authService.testConnection();
+      // if (!connected) {
+      //   setState(() {
+      //     _isLoading = false;
+      //   });
+      //   ScaffoldMessenger.of(context).showSnackBar(
+      //     const SnackBar(
+      //       content: Text('Cannot connect to backend server. Please check your connection.'),
+      //       backgroundColor: Colors.red,
+      //       duration: Duration(seconds: 5),
+      //     ),
+      //   );
+      //   return;
+      // }
       
       final result = await _authService.signInWithGoogle();
       
@@ -521,31 +521,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     fontWeight: FontWeight.w400,
                                   ),
                                 ),
-                                
-                                const SizedBox(height: 20),
-                                
-                                // Connection Test Button (for debugging)
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 40,
-                                  child: OutlinedButton(
-                                    onPressed: _testConnection,
-                                    style: OutlinedButton.styleFrom(
-                                      side: const BorderSide(color: Color(0xFF4A9B8E)),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(20),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Test Backend Connection',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Color(0xFF4A9B8E),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                              
                                 
                                 const SizedBox(height: 20),
                                 // Google Sign-In button
