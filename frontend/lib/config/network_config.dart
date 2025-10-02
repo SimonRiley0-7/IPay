@@ -47,23 +47,26 @@ class NetworkConfig {
   
   // Get all possible URLs for connection testing (in order of preference)
   static List<String> get allUrls => [
-    '$computerIPUrl/api/auth',  // Primary for physical devices
-    '$localhost/api/auth',       // Fallback
-    '$androidEmulator/api/auth', // Android emulator fallback
+    AppConfig.apiBaseUrl,        // Primary: Cloud backend
+    '$computerIPUrl/api/auth',   // Fallback: Local development
+    '$localhost/api/auth',       // Fallback: Localhost
+    '$androidEmulator/api/auth', // Fallback: Android emulator
   ];
   
   // Get test URLs for connection testing
   static List<String> get testUrls => [
-    '$computerIPUrl/api/auth/test',  // Primary for physical devices
-    '$localhost/api/auth/test',       // Fallback
-    '$androidEmulator/api/auth/test', // Android emulator fallback
+    '${AppConfig.apiBaseUrl}/test',   // Primary: Cloud backend
+    '$computerIPUrl/api/auth/test',   // Fallback: Local development
+    '$localhost/api/auth/test',       // Fallback: Localhost
+    '$androidEmulator/api/auth/test', // Fallback: Android emulator
   ];
   
   // Health check URLs
   static List<String> get healthCheckUrls => [
-    '$computerIPUrl/health',
-    '$localhost/health',
-    '$androidEmulator/health',
+    '${AppConfig.apiBaseUrl.replaceAll('/api/auth', '')}/health', // Primary: Cloud backend
+    '$computerIPUrl/health',   // Fallback: Local development
+    '$localhost/health',       // Fallback: Localhost
+    '$androidEmulator/health', // Fallback: Android emulator
   ];
   
   // Test connectivity to all available endpoints
