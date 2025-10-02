@@ -348,23 +348,7 @@ class _LoginScreenState extends State<LoginScreen>
                               const SizedBox(height: 20),
                               
                               // Menu icon (three dots)
-                              Align(
-                                alignment: Alignment.topLeft,
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  child: Column(
-                                    children: List.generate(3, (index) => Container(
-                                      width: 4,
-                                      height: 4,
-                                      margin: const EdgeInsets.symmetric(vertical: 2),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    )),
-                                  ),
-                                ),
-                              ),
+                              
                               
                               const Spacer(),
                               
@@ -407,8 +391,8 @@ class _LoginScreenState extends State<LoginScreen>
                                 child: Center(
                                   child: Image.asset(
                                     'assets/images/logo.png',
-                                    width: 120,
-                                    height: 120,
+                                    width: 150,
+                                    height: 150,
                                     fit: BoxFit.contain,
                                     errorBuilder: (context, error, stackTrace) {
                                       // Fallback if logo doesn't exist
