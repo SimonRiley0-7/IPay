@@ -36,18 +36,9 @@ router.post('/otp/send', async (req, res) => {
     const formattedNumber = `+91${mobileNumber}`;
     console.log(`📱 Sending OTP to: ${formattedNumber}`);
     
-    // Check if MessageCentral credentials are available
-    if (!process.env.MESSAGECENTRAL_CUSTOMER_ID || !process.env.MESSAGECENTRAL_EMAIL || !process.env.MESSAGECENTRAL_PASSWORD) {
-      console.log('❌ MessageCentral credentials not configured');
-      return res.status(500).json({
-        success: false,
-        message: 'OTP service not configured. Please contact administrator.'
-      });
-    }
-    
-    // Use real MessageCentral service
-    const messageCentralService = require('../services/messageCentralService');
-    const result = await messageCentralService.sendOTP(formattedNumber, '+91');
+    // Use Twilio service
+    const twilioService = require('../utils/twilioService');
+    const result = await twilioService.sendOTP(formattedNumber);
     
     if (result.success) {
       res.status(200).json({
@@ -102,18 +93,9 @@ router.post('/otp/verify', async (req, res) => {
     const formattedNumber = `+91${mobileNumber}`;
     console.log(`🔍 Verifying OTP for: ${formattedNumber}`);
     
-    // Check if MessageCentral credentials are available
-    if (!process.env.MESSAGECENTRAL_CUSTOMER_ID || !process.env.MESSAGECENTRAL_EMAIL || !process.env.MESSAGECENTRAL_PASSWORD) {
-      console.log('❌ MessageCentral credentials not configured');
-      return res.status(500).json({
-        success: false,
-        message: 'OTP service not configured. Please contact administrator.'
-      });
-    }
-    
-    // Use real MessageCentral service
-    const messageCentralService = require('../services/messageCentralService');
-    const verifyResult = await messageCentralService.verifyOTP(verificationId, otp, formattedNumber, '+91');
+    // Use Twilio service
+    const twilioService = require('../utils/twilioService');
+    const verifyResult = await twilioService.verifyOTP(verificationId, otp);
     
     if (verifyResult.success) {
       res.status(200).json({
