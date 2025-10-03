@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
+import '../main_screen.dart';
 
 class OrderSuccessScreen extends StatelessWidget {
   final Map<String, dynamic> orderData;
@@ -268,9 +269,9 @@ class OrderSuccessScreen extends StatelessWidget {
           height: 56,
           child: ElevatedButton(
             onPressed: () {
-              // Navigate to home and clear cart
-              Navigator.of(context).pushNamedAndRemoveUntil(
-                '/home',
+              // Navigate to home screen
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const MainScreen()),
                 (route) => false,
               );
             },
@@ -309,8 +310,11 @@ class OrderSuccessScreen extends StatelessWidget {
           height: 56,
           child: OutlinedButton(
             onPressed: () {
-              // Navigate to orders page
-              Navigator.of(context).pushNamed('/orders');
+              // Navigate to main screen and then to orders tab
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const MainScreen()),
+                (route) => false,
+              );
             },
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF4A9B8E),

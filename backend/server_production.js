@@ -13,6 +13,7 @@ const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const walletRoutes = require('./routes/wallet');
 const orderRoutes = require('./routes/orders');
+const otpRoutes = require('./routes/otp');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -75,7 +76,8 @@ app.get('/', (req, res) => {
       auth: '/api/auth',
       products: '/api/products',
       wallet: '/api/wallet',
-      orders: '/api/orders'
+      orders: '/api/orders',
+      otp: '/api/otp'
     }
   });
 });
@@ -95,6 +97,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/otp', otpRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

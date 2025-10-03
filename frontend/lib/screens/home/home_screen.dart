@@ -796,16 +796,19 @@ class _HomeScreenState extends State<HomeScreen>
                               borderRadius: BorderRadius.circular(8),
                             ),
                           )
-                        : Text(
-                            '₹${_formatCurrency(_walletBalance)}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 36,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: -0.8,
-                              height: 1.0,
-                        ),
-                      ),
+                        : GestureDetector(
+                            onTap: _handleBalanceDetails,
+                            child: Text(
+                              '₹${_formatCurrency(_walletBalance)}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 36,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.8,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
                     ],
                   ),
                 _buildAddMoneyButton(),
@@ -1526,26 +1529,54 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _handleAddMoney() {
     HapticFeedback.lightImpact();
-    // TODO: Navigate to add money screen or show bottom sheet
-    debugPrint('Add money functionality');
+    // Navigate to Wallet tab (index 4) in main screen
+    if (widget.onNavigateToTab != null) {
+      widget.onNavigateToTab!(4); // Wallet tab index
+    } else {
+      // Fallback: push new screen if callback not available
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const WalletScreen()),
+      );
+    }
   }
 
   void _handleWalletHistory() {
     HapticFeedback.lightImpact();
-    // TODO: Navigate to wallet history screen
-    debugPrint('Navigate to wallet history');
+    // Navigate to Wallet tab (index 4) in main screen
+    if (widget.onNavigateToTab != null) {
+      widget.onNavigateToTab!(4); // Wallet tab index
+    } else {
+      // Fallback: push new screen if callback not available
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const WalletScreen()),
+      );
+    }
   }
 
   void _handleReceipts() {
     HapticFeedback.lightImpact();
-    // TODO: Navigate to digital receipts screen
-    debugPrint('Navigate to digital receipts');
+    // Navigate to Orders tab (index 3) in main screen to show all receipts
+    if (widget.onNavigateToTab != null) {
+      widget.onNavigateToTab!(3); // Orders tab index
+    } else {
+      // Fallback: push new screen if callback not available
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const OrdersScreen()),
+      );
+    }
   }
 
   void _handleBalanceDetails() {
     HapticFeedback.lightImpact();
-    // TODO: Navigate to detailed balance/wallet info screen
-    debugPrint('Navigate to balance details');
+    // Navigate to Wallet tab (index 4) in main screen
+    if (widget.onNavigateToTab != null) {
+      widget.onNavigateToTab!(4); // Wallet tab index
+    } else {
+      // Fallback: push new screen if callback not available
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (context) => const WalletScreen()),
+      );
+    }
   }
 
   void _handleScanPay() {

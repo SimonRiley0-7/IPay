@@ -197,9 +197,9 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
           ),
           ElevatedButton(
             onPressed: () {
+              Navigator.pop(context); // Close dialog
+              // Go back to home screen
               Navigator.pop(context);
-              Navigator.pop(context); // Go back to home
-              // TODO: Navigate to cart screen
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A9B8E),

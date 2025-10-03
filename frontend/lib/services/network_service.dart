@@ -92,11 +92,11 @@ class NetworkService {
     }
   }
 
-  // Test connectivity to all endpoints
+  // Test connectivity to cloud backend endpoints
   Future<Map<String, bool>> testAllEndpoints() async {
     final results = <String, bool>{};
     
-    for (String url in NetworkConfig.allUrls) {
+    for (String url in NetworkConfig.testUrls) {
       try {
         final client = HttpClient();
         client.connectionTimeout = const Duration(seconds: 5);
@@ -105,7 +105,7 @@ class NetworkService {
         final request = await client.getUrl(uri);
         final response = await request.close();
         
-        results[url] = response.statusCode == 200 || response.statusCode == 404;
+        results[url] = response.statusCode == 200;
         client.close();
       } catch (e) {
         results[url] = false;

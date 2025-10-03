@@ -5,6 +5,7 @@ import 'package:ipay/screens/cart/cart_screen.dart';
 import 'package:ipay/screens/orders/orders_screen.dart';
 import 'package:ipay/screens/profile/profile_screen.dart';
 import 'package:ipay/widgets/bottom_navigation_bar.dart';
+import 'package:ipay/services/auth_service.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -13,7 +14,7 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   int? _cartItemCount;
 
@@ -32,6 +33,89 @@ class _MainScreenState extends State<MainScreen> {
     'OrdersScreen',
     'ProfileScreen',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    
+    switch (state) {
+      case AppLifecycleState.resumed:
+        // App came back to foreground - only check login if it's been a while
+        print('🔄 App resumed - checking login status');
+        _checkLoginStatusIfNeeded();
+        break;
+      case AppLifecycleState.paused:
+        // App went to background - no action needed
+        print('⏸️ App paused');
+        break;
+      case AppLifecycleState.inactive:
+        // App is inactive - no action needed
+        break;
+      case AppLifecycleState.detached:
+        // App is detached - no action needed
+        break;
+      case AppLifecycleState.hidden:
+        // App is hidden - no action needed
+        break;
+    }
+  }
+
+  // Check login status only if needed (not too frequently)
+  Future<void> _checkLoginStatusIfNeeded() async {
+    try {
+      final authService = AuthService();
+      final isLoggedIn = await authService.isLoggedIn();
+      
+      if (!isLoggedIn) {
+        print('❌ User not logged in - redirecting to login');
+        // User is not logged in, redirect to login
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          );
+        }
+      } else {
+        print('✅ User is still logged in');
+      }
+    } catch (e) {
+      print('Error checking login status: $e');
+    }
+  }
+
+  Future<void> _checkLoginStatus() async {
+    try {
+      final authService = AuthService();
+      final isLoggedIn = await authService.isLoggedIn();
+      
+      if (!isLoggedIn) {
+        print('❌ User not logged in - redirecting to login');
+        // User is not logged in, redirect to login
+        if (mounted) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            '/login',
+            (route) => false,
+          );
+        }
+      } else {
+        print('✅ User is still logged in');
+      }
+    } catch (e) {
+      print('Error checking login status: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -26,6 +26,9 @@ class AuthService {
   Future<void> initializeNetwork() async {
     await _networkService.initialize();
     _dio = _networkService.dio;
+    
+    // Debug: Print current configuration
+    print('🔧 AuthService initialized with base URL: ${_dio?.options.baseUrl}');
   }
 
   // Get Dio instance with automatic initialization
@@ -172,22 +175,61 @@ class AuthService {
   ));
   }
 
-  // Store JWT token
+  // Store JWT token with 30-day expiration
   Future<void> storeToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
+    final now = DateTime.now();
+    final expirationDate = now.add(const Duration(days: 30));
+    
     await prefs.setString('jwt_token', token);
+    await prefs.setString('token_expiration', expirationDate.toIso8601String());
   }
 
-  // Get stored JWT token
+  // Get stored JWT token (check if still valid)
   Future<String?> getStoredToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('jwt_token');
+    final token = prefs.getString('jwt_token');
+    final expirationString = prefs.getString('token_expiration');
+    
+    if (token == null || expirationString == null) {
+      return null;
+    }
+    
+    try {
+      final expirationDate = DateTime.parse(expirationString);
+      final now = DateTime.now();
+      
+      // If token is expired, try to refresh it instead of clearing
+      if (now.isAfter(expirationDate)) {
+        print('🔄 Token expired, attempting refresh...');
+        final refreshed = await _refreshToken();
+        if (refreshed) {
+          // Get the new token
+          final newToken = prefs.getString('jwt_token');
+          print('✅ Token refreshed successfully');
+          return newToken;
+        } else {
+          // If refresh fails, then clear the token
+          print('❌ Token refresh failed, clearing stored data');
+          await clearStoredToken();
+          return null;
+        }
+      }
+      
+      return token;
+    } catch (e) {
+      print('❌ Error checking token validity: $e');
+      // If parsing fails, clear the token
+      await clearStoredToken();
+      return null;
+    }
   }
 
   // Clear stored token
   Future<void> clearStoredToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
+    await prefs.remove('token_expiration');
   }
 
   // Store user data
@@ -210,6 +252,7 @@ class AuthService {
   Future<void> clearAllStoredData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
+    await prefs.remove('token_expiration');
     await prefs.remove('user_data');
   }
 
@@ -218,7 +261,30 @@ class AuthService {
     try {
       print('🔄 Refreshing JWT token...');
       
-      final response = await dio.post('/refresh');
+      // Get the current token to send for refresh
+      final prefs = await SharedPreferences.getInstance();
+      final currentToken = prefs.getString('jwt_token');
+      
+      if (currentToken == null) {
+        print('❌ No token found for refresh');
+        return false;
+      }
+      
+      // Create a new dio instance for refresh to avoid interceptor loops
+      final refreshDio = Dio();
+      refreshDio.options.baseUrl = ApiConfig.baseUrl;
+      refreshDio.options.connectTimeout = const Duration(seconds: 10);
+      refreshDio.options.receiveTimeout = const Duration(seconds: 10);
+      
+      final response = await refreshDio.post(
+        '/refresh',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $currentToken',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
       
       if (response.statusCode == 200 && response.data['success'] == true) {
         final newToken = response.data['data']['token'];
@@ -514,13 +580,20 @@ class AuthService {
     }
   }
 
-  // Phone Authentication - Send OTP via Twilio Backend
+  // Phone Authentication - Send OTP via MessageCentral Backend
   Future<AuthResult> sendPhoneOTP(String phoneNumber) async {
     try {
-      print('📱 Sending OTP to: $phoneNumber via Twilio backend');
+      print('📱 Sending OTP to: $phoneNumber via MessageCentral backend');
       
-      final response = await dio.post('/send-otp', data: {
-        'phoneNumber': phoneNumber,
+      // Create a separate Dio instance for OTP calls (different base URL)
+      final otpDio = Dio();
+      otpDio.options.baseUrl = ApiConfig.baseUrl.replaceAll('/api/auth', '');
+      otpDio.options.connectTimeout = ApiConfig.connectTimeout;
+      otpDio.options.receiveTimeout = ApiConfig.timeout;
+      otpDio.options.headers = ApiConfig.headers;
+      
+      final response = await otpDio.post('/api/otp/send', data: {
+        'mobileNumber': phoneNumber,
       });
 
       if (response.statusCode == 200) {
@@ -528,7 +601,7 @@ class AuthService {
         return AuthResult(
           success: true,
           message: response.data['message'] ?? 'OTP sent successfully',
-          verificationId: response.data['phoneNumber'] ?? phoneNumber, // Use phone number as verification ID
+          verificationId: response.data['data']['verificationId'],
         );
       } else {
         print('❌ OTP send failed. Status: ${response.statusCode}, Response: ${response.data}');
@@ -558,46 +631,54 @@ class AuthService {
     }
   }
 
-  // Phone Authentication - Verify OTP via Twilio Backend
+  // Phone Authentication - Verify OTP via MessageCentral Backend
   Future<AuthResult> verifyPhoneOTP(String verificationId, String otp, String phoneNumber) async {
     try {
-      print('🔍 Verifying OTP: $otp for phone: $phoneNumber via Twilio backend');
+      print('🔍 Verifying OTP: $otp for phone: $phoneNumber via MessageCentral backend');
       
-      final response = await dio.post('/verify-otp', data: {
-        'phoneNumber': phoneNumber,
+      // Create a separate Dio instance for OTP calls (different base URL)
+      final otpDio = Dio();
+      otpDio.options.baseUrl = ApiConfig.baseUrl.replaceAll('/api/auth', '');
+      otpDio.options.connectTimeout = ApiConfig.connectTimeout;
+      otpDio.options.receiveTimeout = ApiConfig.timeout;
+      otpDio.options.headers = ApiConfig.headers;
+      
+      final response = await otpDio.post('/api/otp/verify', data: {
+        'verificationId': verificationId,
         'otp': otp,
+        'mobileNumber': phoneNumber,
       });
 
       print('📡 Backend response status: ${response.statusCode}');
       print('📡 Backend response data: ${response.data}');
       
       if (response.statusCode == 200) {
-        // Existing user - login successful
         final data = response.data['data'];
         
-        print('👤 Existing user login - storing token and user data');
-        await storeToken(data['token']);
-        await storeUserData(data['user']);
+        if (data['isNewUser'] == true) {
+          // New user - requires registration
+          print('🆕 New user detected - requiresRegistration = true');
+          return AuthResult(
+            success: true,
+            message: response.data['message'],
+            requiresRegistration: true,
+            phoneNumber: phoneNumber,
+            firebaseUid: 'messagecentral_verified',
+          );
+        } else {
+          // Existing user - login successful
+          print('👤 Existing user login - storing token and user data');
+          await storeToken(data['token']);
+          await storeUserData(data['user']);
 
-        return AuthResult(
-          success: true,
-          message: response.data['message'],
-          user: data['user'],
-          token: data['token'],
-          isNewUser: false,
-        );
-      } else if (response.statusCode == 202) {
-        // New user - requires registration
-        final data = response.data['data'];
-        
-        print('🆕 New user detected - requiresRegistration = true');
-        return AuthResult(
-          success: true,
-          message: response.data['message'],
-          requiresRegistration: true,
-          phoneNumber: data['phone'],
-          firebaseUid: 'twilio_verified', // No Firebase UID needed for Twilio
-        );
+          return AuthResult(
+            success: true,
+            message: response.data['message'],
+            user: data['user'],
+            token: data['token'],
+            isNewUser: false,
+          );
+        }
       } else {
         return AuthResult(
           success: false,
@@ -656,10 +737,10 @@ class AuthService {
     }
   }
 
-  // Add phone to Google user (via Twilio OTP verification)
+  // Add phone to Google user (via MessageCentral OTP verification)
   Future<AuthResult> addPhoneToGoogleUser(String phoneNumber, String otp) async {
     try {
-      // First verify OTP with Twilio
+      // First verify OTP with MessageCentral
       final otpVerification = await verifyPhoneOTP('', otp, phoneNumber);
       
       if (!otpVerification.success) {

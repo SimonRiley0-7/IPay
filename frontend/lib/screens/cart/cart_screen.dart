@@ -365,9 +365,28 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
     }
     
     try {
-      await _cartService.updateQuantity(itemId, newQuantity);
-      await _loadCartItems();
-      await HapticFeedback.lightImpact();
+      // Update the quantity in the service
+      final success = await _cartService.updateQuantity(itemId, newQuantity);
+      
+      if (success) {
+        // Update local state immediately for better UX
+        if (mounted) {
+          setState(() {
+            // Find and update the item in the local list
+            for (int i = 0; i < _cartItems.length; i++) {
+              if (_cartItems[i]['id'] == itemId || _cartItems[i]['barcode'] == itemId) {
+                _cartItems[i]['quantity'] = newQuantity;
+                _cartItems[i]['totalPrice'] = (_cartItems[i]['price'] ?? 0) * newQuantity;
+                break;
+              }
+            }
+          });
+        }
+        
+        await HapticFeedback.lightImpact();
+      } else {
+        throw Exception('Failed to update quantity');
+      }
     } catch (e) {
       print('Error updating quantity: $e');
       if (mounted) {
@@ -605,36 +624,7 @@ class _CartScreenState extends State<CartScreen> with TickerProviderStateMixin {
           children: [
             Row(
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        HapticFeedback.lightImpact();
-                        Navigator.pop(context);
-                      },
-                      child: const Icon(
-                        Iconsax.arrow_left_2,
-                        color: AppTheme.textSecondary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                ),
+                
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

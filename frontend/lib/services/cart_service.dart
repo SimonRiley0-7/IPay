@@ -82,14 +82,17 @@ class CartService {
   }
 
   // Remove product from cart
-  Future<bool> removeFromCart(String barcode) async {
+  Future<bool> removeFromCart(String itemId) async {
     try {
       List<Map<String, dynamic>> cart = await getCart();
-      cart.removeWhere((item) => item['barcode'] == barcode);
+      cart.removeWhere((item) => 
+        item['id'] == itemId || item['barcode'] == itemId
+      );
       
       await _saveCartLocally(cart);
       // TODO: Sync with backend
       
+      print('✅ Removed item from cart: $itemId');
       return true;
     } catch (e) {
       print('Error removing from cart: $e');
@@ -98,11 +101,15 @@ class CartService {
   }
 
   // Update quantity of product in cart
-  Future<bool> updateQuantity(String barcode, int quantity) async {
+  Future<bool> updateQuantity(String itemId, int quantity) async {
     try {
       List<Map<String, dynamic>> cart = await getCart();
       
-      int index = cart.indexWhere((item) => item['barcode'] == barcode);
+      // Try to find item by id first, then by barcode
+      int index = cart.indexWhere((item) => 
+        item['id'] == itemId || item['barcode'] == itemId
+      );
+      
       if (index != -1) {
         if (quantity <= 0) {
           cart.removeAt(index);
@@ -114,9 +121,11 @@ class CartService {
         await _saveCartLocally(cart);
         // TODO: Sync with backend
         
+        print('✅ Updated quantity for item: ${cart[index]['name']} to $quantity');
         return true;
       }
       
+      print('❌ Item not found in cart: $itemId');
       return false;
     } catch (e) {
       print('Error updating quantity: $e');

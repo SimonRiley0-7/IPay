@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 const User = require('../models/User');
 
@@ -47,7 +48,6 @@ const {
   verifyFirebaseGoogleToken,
   createUserProfileFromGoogle
 } = require('../utils/googleAuth');
-const twilioService = require('../utils/twilioService');
 
 // @route   GET /api/auth
 // @desc    Get auth service info
@@ -112,118 +112,6 @@ router.get('/razorpay-config', (req, res) => {
     });
   }
 });
-
-// @route   POST /api/auth/send-otp
-// @desc    Send OTP via Twilio SMS
-// @access  Public
-router.post('/send-otp', async (req, res) => {
-  try {
-    const { phoneNumber } = req.body;
-
-    if (!phoneNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Phone number is required'
-      });
-    }
-
-    // Format phone number (ensure it has country code)
-    let formattedPhone = phoneNumber;
-    if (!phoneNumber.startsWith('+')) {
-      formattedPhone = '+91' + phoneNumber;
-    }
-
-    console.log(`📱 Sending OTP to: ${formattedPhone}`);
-    
-    const result = await twilioService.sendOTP(formattedPhone);
-    
-    if (result.success) {
-      res.status(200).json({
-        success: true,
-        message: result.message,
-        phoneNumber: formattedPhone
-      });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: result.message
-      });
-    }
-
-  } catch (error) {
-    console.error('Send OTP error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error while sending OTP'
-    });
-  }
-});
-
-// @route   POST /api/auth/verify-otp
-// @desc    Verify OTP and login/register user
-// @access  Public
-router.post('/verify-otp', async (req, res) => {
-  try {
-    const { phoneNumber, otp } = req.body;
-
-    if (!phoneNumber || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: 'Phone number and OTP are required'
-      });
-    }
-
-    console.log(`🔍 Verifying OTP for: ${phoneNumber}`);
-    
-    const verification = await twilioService.verifyOTP(phoneNumber, otp);
-    
-    if (!verification.success) {
-      return res.status(400).json({
-        success: false,
-        message: verification.message
-      });
-    }
-
-    // OTP verified, now check if user exists
-    let user = await User.findOne({ phone: phoneNumber });
-
-    if (user) {
-      // Existing user - login
-      user.phoneVerified = true;
-      await user.updateLastLogin();
-      
-      const token = generateJWTToken(user._id);
-      
-      return res.status(200).json({
-        success: true,
-        message: 'Login successful',
-        data: {
-          user: user.getSafeUserData(),
-          token,
-          isNewUser: false
-        }
-      });
-    } else {
-      // New user - needs registration
-      return res.status(202).json({
-        success: true,
-        message: 'Phone verified. Please complete registration.',
-        data: {
-          phone: phoneNumber,
-          requiresRegistration: true
-        }
-      });
-    }
-
-  } catch (error) {
-    console.error('Verify OTP error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error while verifying OTP'
-    });
-  }
-});
-
 
 // @route   POST /api/auth/register
 // @desc    Complete registration after OTP verification
@@ -435,7 +323,7 @@ router.post('/google', async (req, res) => {
 });
 
 // @route   POST /api/auth/google/add-phone
-// @desc    Add phone number to Google user (after OTP verification via Twilio)
+// @desc    Add phone number to Google user (after OTP verification via MessageCentral)
 // @access  Private
 router.post('/google/add-phone', verifyJWTToken, async (req, res) => {
   try {
@@ -502,11 +390,52 @@ router.get('/me', verifyJWTToken, async (req, res) => {
 });
 
 // @route   POST /api/auth/refresh
-// @desc    Refresh JWT token
+// @desc    Refresh JWT token (handles expired tokens)
 // @access  Private
-router.post('/refresh', verifyJWTToken, async (req, res) => {
+router.post('/refresh', async (req, res) => {
   try {
-    const newToken = generateJWTToken(req.user._id);
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: 'No token provided for refresh'
+      });
+    }
+
+    // Try to decode the token even if expired
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      // If token is expired, try to decode without verification
+      if (jwtError.name === 'TokenExpiredError') {
+        decoded = jwt.decode(token);
+        if (!decoded || !decoded.userId) {
+          return res.status(401).json({
+            success: false,
+            message: 'Invalid expired token'
+          });
+        }
+      } else {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid token'
+        });
+      }
+    }
+
+    // Verify user still exists and is active
+    const user = await User.findById(decoded.userId).select('-__v');
+    if (!user || !user.isActive) {
+      return res.status(401).json({
+        success: false,
+        message: 'User not found or inactive'
+      });
+    }
+
+    // Generate new token
+    const newToken = generateJWTToken(user._id);
     
     res.status(200).json({
       success: true,

@@ -572,7 +572,9 @@ class _OrdersScreenState extends State<OrdersScreen> {
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.3,
                 ),
+                textAlign: TextAlign.center,
               ),
+              centerTitle: true,
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(

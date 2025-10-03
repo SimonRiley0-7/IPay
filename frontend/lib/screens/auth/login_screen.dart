@@ -153,23 +153,6 @@ class _LoginScreenState extends State<LoginScreen>
     try {
       print('🚀 Starting Google Sign-In process...');
       
-      // Test connection first (temporarily disabled for debugging)
-      print('🔄 Testing backend connection before Google Sign-In...');
-      // final connected = await _authService.testConnection();
-      // if (!connected) {
-      //   setState(() {
-      //     _isLoading = false;
-      //   });
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(
-      //       content: Text('Cannot connect to backend server. Please check your connection.'),
-      //       backgroundColor: Colors.red,
-      //       duration: Duration(seconds: 5),
-      //     ),
-      //   );
-      //   return;
-      // }
-      
       final result = await _authService.signInWithGoogle();
       
       if (result.success) {
