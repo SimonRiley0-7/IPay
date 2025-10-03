@@ -6,7 +6,119 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const User = require('../models/User');
 
-// OTP endpoints with real MessageCentral integration
+// OTP endpoints with Twilio integration
+router.post('/send-otp', async (req, res) => {
+  try {
+    let { phoneNumber } = req.body;
+    
+    if (!phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a mobile number'
+      });
+    }
+    
+    // Handle different formats: +91XXXXXXXXXX, 91XXXXXXXXXX, or XXXXXXXXXX
+    if (phoneNumber.startsWith('+91')) {
+      phoneNumber = phoneNumber.substring(3);
+    } else if (phoneNumber.startsWith('91') && phoneNumber.length === 12) {
+      phoneNumber = phoneNumber.substring(2);
+    }
+    
+    // Validate that we have exactly 10 digits
+    if (phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid 10-digit mobile number'
+      });
+    }
+    
+    const formattedNumber = `+91${phoneNumber}`;
+    console.log(`📱 Sending OTP to: ${formattedNumber}`);
+    
+    // Use Twilio service
+    const twilioService = require('../utils/twilioService');
+    const result = await twilioService.sendOTP(formattedNumber);
+    
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: 'OTP sent successfully',
+        verificationId: result.verificationId
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message || 'Failed to send OTP'
+      });
+    }
+  } catch (error) {
+    console.error('OTP send error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP'
+    });
+  }
+});
+
+router.post('/verify-otp', async (req, res) => {
+  try {
+    let { verificationId, otp, phoneNumber } = req.body;
+    
+    if (!otp || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide OTP and mobile number'
+      });
+    }
+    
+    // Handle different formats: +91XXXXXXXXXX, 91XXXXXXXXXX, or XXXXXXXXXX
+    if (phoneNumber.startsWith('+91')) {
+      phoneNumber = phoneNumber.substring(3);
+    } else if (phoneNumber.startsWith('91') && phoneNumber.length === 12) {
+      phoneNumber = phoneNumber.substring(2);
+    }
+    
+    // Validate that we have exactly 10 digits
+    if (phoneNumber.length !== 10 || !/^\d{10}$/.test(phoneNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid 10-digit mobile number'
+      });
+    }
+    
+    const formattedNumber = `+91${phoneNumber}`;
+    console.log(`🔍 Verifying OTP for: ${formattedNumber}`);
+    
+    // Use Twilio service
+    const twilioService = require('../utils/twilioService');
+    const verifyResult = await twilioService.verifyOTP(verificationId, otp);
+    
+    if (verifyResult.success) {
+      res.status(200).json({
+        success: true,
+        message: 'OTP verified successfully',
+        data: {
+          isNewUser: true,
+          phoneNumber: formattedNumber,
+          firebaseUid: 'twilio_verified'
+        }
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: verifyResult.message || 'Invalid OTP'
+      });
+    }
+  } catch (error) {
+    console.error('OTP verify error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify OTP'
+    });
+  }
+});
+
 router.post('/otp/send', async (req, res) => {
   try {
     let { mobileNumber } = req.body;
