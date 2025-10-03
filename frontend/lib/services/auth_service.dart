@@ -585,8 +585,8 @@ class AuthService {
     try {
       print('📱 Sending OTP to: $phoneNumber via Twilio backend');
       
-      final response = await dio.post('/otp/send', data: {
-        'mobileNumber': phoneNumber,
+      final response = await dio.post('/send-otp', data: {
+        'phoneNumber': phoneNumber,
       });
 
       if (response.statusCode == 200) {
@@ -594,7 +594,7 @@ class AuthService {
         return AuthResult(
           success: true,
           message: response.data['message'] ?? 'OTP sent successfully',
-          verificationId: response.data['data']['verificationId'],
+          verificationId: response.data['verificationId'],
         );
       } else {
         print('❌ OTP send failed. Status: ${response.statusCode}, Response: ${response.data}');
@@ -629,10 +629,10 @@ class AuthService {
     try {
       print('🔍 Verifying OTP: $otp for phone: $phoneNumber via Twilio backend');
       
-      final response = await dio.post('/otp/verify', data: {
+      final response = await dio.post('/verify-otp', data: {
         'verificationId': verificationId,
         'otp': otp,
-        'mobileNumber': phoneNumber,
+        'phoneNumber': phoneNumber,
       });
 
       print('📡 Backend response status: ${response.statusCode}');
