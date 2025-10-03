@@ -1,7 +1,7 @@
 // App Configuration - Easy switching between local and production
 class AppConfig {
   // Set this to true when you want to build for distribution
-  static const bool isProduction = false; // Change to true for APK builds
+  static const bool isProduction = true; // Change to true for APK builds
   
   // Production URLs (replace with your actual cloud URL)
   static const String productionBackendUrl = 'https://ipay-2oc7.onrender.com';
