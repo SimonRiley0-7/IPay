@@ -592,7 +592,7 @@ class AuthService {
       otpDio.options.receiveTimeout = ApiConfig.timeout;
       otpDio.options.headers = ApiConfig.headers;
       
-      final response = await otpDio.post('/api/otp/send', data: {
+      final response = await otpDio.post('/api/auth/otp/send', data: {
         'mobileNumber': phoneNumber,
       });
 
@@ -643,7 +643,7 @@ class AuthService {
       otpDio.options.receiveTimeout = ApiConfig.timeout;
       otpDio.options.headers = ApiConfig.headers;
       
-      final response = await otpDio.post('/api/otp/verify', data: {
+      final response = await otpDio.post('/api/auth/otp/verify', data: {
         'verificationId': verificationId,
         'otp': otp,
         'mobileNumber': phoneNumber,
