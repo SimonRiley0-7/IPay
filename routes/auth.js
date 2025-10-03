@@ -95,7 +95,7 @@ router.post('/verify-otp', async (req, res) => {
     
     // Use Twilio service
     const twilioService = require('../utils/twilioService');
-    const verifyResult = await twilioService.verifyOTP(verificationId, otp);
+    const verifyResult = await twilioService.verifyOTP(formattedNumber, otp);
     
     console.log('🔍 Twilio verify result:', verifyResult);
     
@@ -213,7 +213,7 @@ router.post('/otp/verify', async (req, res) => {
     
     // Use Twilio service
     const twilioService = require('../utils/twilioService');
-    const verifyResult = await twilioService.verifyOTP(verificationId, otp);
+    const verifyResult = await twilioService.verifyOTP(formattedNumber, otp);
     
     if (verifyResult.success) {
       res.status(200).json({
