@@ -40,6 +40,8 @@ router.post('/send-otp', async (req, res) => {
     const twilioService = require('../utils/twilioService');
     const result = await twilioService.sendOTP(formattedNumber);
     
+    console.log('📱 Twilio send result:', result);
+    
     if (result.success) {
       res.status(200).json({
         success: true,
@@ -47,6 +49,7 @@ router.post('/send-otp', async (req, res) => {
         verificationId: result.verificationId
       });
     } else {
+      console.error('❌ Twilio send failed:', result);
       res.status(400).json({
         success: false,
         message: result.message || 'Failed to send OTP'
@@ -94,6 +97,8 @@ router.post('/verify-otp', async (req, res) => {
     const twilioService = require('../utils/twilioService');
     const verifyResult = await twilioService.verifyOTP(verificationId, otp);
     
+    console.log('🔍 Twilio verify result:', verifyResult);
+    
     if (verifyResult.success) {
       res.status(200).json({
         success: true,
@@ -105,6 +110,7 @@ router.post('/verify-otp', async (req, res) => {
         }
       });
     } else {
+      console.error('❌ Twilio verify failed:', verifyResult);
       res.status(400).json({
         success: false,
         message: verifyResult.message || 'Invalid OTP'
