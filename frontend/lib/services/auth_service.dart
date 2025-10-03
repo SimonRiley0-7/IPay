@@ -580,20 +580,13 @@ class AuthService {
     }
   }
 
-  // Phone Authentication - Send OTP via MessageCentral Backend
+  // Phone Authentication - Send OTP via Twilio Backend
   Future<AuthResult> sendPhoneOTP(String phoneNumber) async {
     try {
-      print('📱 Sending OTP to: $phoneNumber via MessageCentral backend');
+      print('📱 Sending OTP to: $phoneNumber via Twilio backend');
       
-      // Create a separate Dio instance for OTP calls (different base URL)
-      final otpDio = Dio();
-      otpDio.options.baseUrl = ApiConfig.baseUrl.replaceAll('/api/auth', '');
-      otpDio.options.connectTimeout = ApiConfig.connectTimeout;
-      otpDio.options.receiveTimeout = ApiConfig.timeout;
-      otpDio.options.headers = ApiConfig.headers;
-      
-      final response = await otpDio.post('/api/auth/otp/send', data: {
-        'mobileNumber': phoneNumber,
+      final response = await dio.post('/send-otp', data: {
+        'phoneNumber': phoneNumber,
       });
 
       if (response.statusCode == 200) {
@@ -601,7 +594,7 @@ class AuthService {
         return AuthResult(
           success: true,
           message: response.data['message'] ?? 'OTP sent successfully',
-          verificationId: response.data['data']['verificationId'],
+          verificationId: response.data['verificationId'],
         );
       } else {
         print('❌ OTP send failed. Status: ${response.statusCode}, Response: ${response.data}');
@@ -631,22 +624,15 @@ class AuthService {
     }
   }
 
-  // Phone Authentication - Verify OTP via MessageCentral Backend
+  // Phone Authentication - Verify OTP via Twilio Backend
   Future<AuthResult> verifyPhoneOTP(String verificationId, String otp, String phoneNumber) async {
     try {
-      print('🔍 Verifying OTP: $otp for phone: $phoneNumber via MessageCentral backend');
+      print('🔍 Verifying OTP: $otp for phone: $phoneNumber via Twilio backend');
       
-      // Create a separate Dio instance for OTP calls (different base URL)
-      final otpDio = Dio();
-      otpDio.options.baseUrl = ApiConfig.baseUrl.replaceAll('/api/auth', '');
-      otpDio.options.connectTimeout = ApiConfig.connectTimeout;
-      otpDio.options.receiveTimeout = ApiConfig.timeout;
-      otpDio.options.headers = ApiConfig.headers;
-      
-      final response = await otpDio.post('/api/auth/otp/verify', data: {
+      final response = await dio.post('/verify-otp', data: {
         'verificationId': verificationId,
         'otp': otp,
-        'mobileNumber': phoneNumber,
+        'phoneNumber': phoneNumber,
       });
 
       print('📡 Backend response status: ${response.statusCode}');
@@ -663,7 +649,7 @@ class AuthService {
             message: response.data['message'],
             requiresRegistration: true,
             phoneNumber: phoneNumber,
-            firebaseUid: 'messagecentral_verified',
+            firebaseUid: 'twilio_verified',
           );
         } else {
           // Existing user - login successful
@@ -699,26 +685,36 @@ class AuthService {
   Future<AuthResult> completePhoneRegistration({
     required String name,
     required String phone,
-    String? email,
+    String? referralCode,
   }) async {
     try {
-      final response = await dio.post('/register', data: {
+      print('📝 Completing phone registration for: $phone');
+      
+      // Create a separate Dio instance for registration calls
+      final regDio = Dio();
+      regDio.options.baseUrl = ApiConfig.baseUrl.replaceAll('/api/auth', '');
+      regDio.options.connectTimeout = ApiConfig.connectTimeout;
+      regDio.options.receiveTimeout = ApiConfig.timeout;
+      regDio.options.headers = ApiConfig.headers;
+      
+      final response = await regDio.post('/api/auth/register', data: {
+        'step': 3,
+        'phoneNumber': phone,
         'name': name,
-        'phone': phone,
-        'email': email,
+        'referralCode': referralCode,
       });
 
-      if (response.statusCode == 201) {
-        final data = response.data['data'];
-        
-        await storeToken(data['token']);
-        await storeUserData(data['user']);
+      print('📡 Registration response: ${response.data}');
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        await storeToken(response.data['token']);
+        await storeUserData(response.data['user']);
 
         return AuthResult(
           success: true,
-          message: response.data['message'],
-          user: data['user'],
-          token: data['token'],
+          message: 'Registration completed successfully',
+          user: response.data['user'],
+          token: response.data['token'],
           isNewUser: true,
         );
       } else {
@@ -727,9 +723,19 @@ class AuthService {
           message: response.data['message'] ?? 'Registration failed',
         );
       }
-
     } catch (e) {
-      print('Registration Error: $e');
+      print('Complete registration error: $e');
+      
+      // Handle DioException
+      if (e is DioException) {
+        if (e.response?.data != null && e.response!.data['message'] != null) {
+          return AuthResult(
+            success: false,
+            message: e.response!.data['message'],
+          );
+        }
+      }
+      
       return AuthResult(
         success: false,
         message: 'Registration failed: ${e.toString()}',

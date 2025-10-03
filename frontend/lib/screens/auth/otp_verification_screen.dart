@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:ipay/services/auth_service.dart';
-import 'package:ipay/screens/auth/registration_screen.dart';
 import 'package:ipay/screens/home/home_screen.dart';
 
 class OTPVerificationScreen extends StatefulWidget {
@@ -65,16 +64,29 @@ class _OTPVerificationScreenState extends State<OTPVerificationScreen> {
         print('📊 phoneNumber: ${result.phoneNumber}');
         
         if (result.requiresRegistration == true) {
-          print('🆕 NEW USER PATH: Navigating to registration screen');
-          // New user - navigate to registration
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RegistrationScreen(
-                phoneNumber: result.phoneNumber!,
-              ),
-            ),
+          print('🆕 NEW USER PATH: Auto-registering and navigating to home screen');
+          // Auto-register new user and navigate to home
+          final registerResult = await _authService.completePhoneRegistration(
+            name: 'User', // Default name
+            phone: widget.phoneNumber,
           );
+          
+          if (registerResult.success) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+              (route) => false,
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(registerResult.message ?? 'Registration failed'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
         } else {
           print('👤 EXISTING USER PATH: Navigating to home screen');
           print('🏠 About to call Navigator.pushAndRemoveUntil');
