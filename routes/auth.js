@@ -9,9 +9,24 @@ const User = require('../models/User');
 // Temporary OTP endpoints (until separate OTP routes are deployed)
 router.post('/otp/send', async (req, res) => {
   try {
-    const { mobileNumber } = req.body;
+    let { mobileNumber } = req.body;
     
-    if (!mobileNumber || mobileNumber.length !== 10) {
+    if (!mobileNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a mobile number'
+      });
+    }
+    
+    // Handle different formats: +91XXXXXXXXXX, 91XXXXXXXXXX, or XXXXXXXXXX
+    if (mobileNumber.startsWith('+91')) {
+      mobileNumber = mobileNumber.substring(3);
+    } else if (mobileNumber.startsWith('91') && mobileNumber.length === 12) {
+      mobileNumber = mobileNumber.substring(2);
+    }
+    
+    // Validate that we have exactly 10 digits
+    if (mobileNumber.length !== 10 || !/^\d{10}$/.test(mobileNumber)) {
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid 10-digit mobile number'
@@ -39,12 +54,27 @@ router.post('/otp/send', async (req, res) => {
 
 router.post('/otp/verify', async (req, res) => {
   try {
-    const { verificationId, otp, mobileNumber } = req.body;
+    let { verificationId, otp, mobileNumber } = req.body;
     
     if (!otp || !mobileNumber) {
       return res.status(400).json({
         success: false,
         message: 'Please provide OTP and mobile number'
+      });
+    }
+    
+    // Handle different formats: +91XXXXXXXXXX, 91XXXXXXXXXX, or XXXXXXXXXX
+    if (mobileNumber.startsWith('+91')) {
+      mobileNumber = mobileNumber.substring(3);
+    } else if (mobileNumber.startsWith('91') && mobileNumber.length === 12) {
+      mobileNumber = mobileNumber.substring(2);
+    }
+    
+    // Validate that we have exactly 10 digits
+    if (mobileNumber.length !== 10 || !/^\d{10}$/.test(mobileNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid 10-digit mobile number'
       });
     }
     
