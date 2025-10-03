@@ -6,8 +6,7 @@ class MessageCentralService {
     this.baseUrl = 'https://cpaas.messagecentral.com';
     this.customerId = process.env.MESSAGECENTRAL_CUSTOMER_ID;
     this.email = process.env.MESSAGECENTRAL_EMAIL;
-    this.password = process.env.MESSAGECENTRAL_PASSWORD;
-    this.senderId = process.env.MESSAGECENTRAL_SENDER_ID || 'iPay';
+    this.password = process.env.MESSAGECENTRAL_PASSWORD
     this.authToken = null;
     this.tokenExpiry = null;
   }
@@ -66,7 +65,6 @@ class MessageCentralService {
         countryCode: cleanCountryCode,
         flowType: 'SMS',
         mobileNumber: cleanMobileNumber,
-        senderId: this.senderId,
         type: 'SMS',
         message: `Your iPay verification code is: {{otp}}. Valid for 5 minutes. Do not share this code with anyone.`,
         messageType: 'OTP'
