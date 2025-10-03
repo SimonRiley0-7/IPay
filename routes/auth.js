@@ -113,7 +113,7 @@ router.post('/otp/verify', async (req, res) => {
     
     // Use real MessageCentral service
     const messageCentralService = require('../services/messageCentralService');
-    const verifyResult = await messageCentralService.verifyOTP(verificationId, otp);
+    const verifyResult = await messageCentralService.verifyOTP(verificationId, otp, formattedNumber, '+91');
     
     if (verifyResult.success) {
       res.status(200).json({
