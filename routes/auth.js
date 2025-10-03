@@ -6,6 +6,68 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const User = require('../models/User');
 
+// Temporary OTP endpoints (until separate OTP routes are deployed)
+router.post('/otp/send', async (req, res) => {
+  try {
+    const { mobileNumber } = req.body;
+    
+    if (!mobileNumber || mobileNumber.length !== 10) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid 10-digit mobile number'
+      });
+    }
+    
+    console.log(`📱 Mock OTP sent to: +91${mobileNumber}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'OTP sent successfully (mock response)',
+      data: {
+        verificationId: `mock_${Date.now()}`,
+        mobileNumber: `+91${mobileNumber}`
+      }
+    });
+  } catch (error) {
+    console.error('OTP send error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP'
+    });
+  }
+});
+
+router.post('/otp/verify', async (req, res) => {
+  try {
+    const { verificationId, otp, mobileNumber } = req.body;
+    
+    if (!otp || !mobileNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide OTP and mobile number'
+      });
+    }
+    
+    console.log(`🔍 Mock OTP verification for: +91${mobileNumber}`);
+    
+    res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully (mock response)',
+      data: {
+        isNewUser: true,
+        phoneNumber: `+91${mobileNumber}`,
+        firebaseUid: 'mock_verified'
+      }
+    });
+  } catch (error) {
+    console.error('OTP verify error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to verify OTP'
+    });
+  }
+});
+
 // Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {

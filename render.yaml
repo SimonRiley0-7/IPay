@@ -20,12 +20,14 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      - key: TWILIO_ACCOUNT_SID
+      - key: MESSAGECENTRAL_CUSTOMER_ID
         sync: false
-      - key: TWILIO_AUTH_TOKEN
+      - key: MESSAGECENTRAL_EMAIL
         sync: false
-      - key: TWILIO_PHONE_NUMBER
+      - key: MESSAGECENTRAL_PASSWORD
         sync: false
+      - key: MESSAGECENTRAL_SENDER_ID
+        value: iPay
       - key: RAZORPAY_KEY_ID
         sync: false
       - key: RAZORPAY_KEY_SECRET
