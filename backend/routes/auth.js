@@ -38,14 +38,10 @@ router.post('/otp/send', async (req, res) => {
     
     // Check if MessageCentral credentials are available
     if (!process.env.MESSAGECENTRAL_CUSTOMER_ID || !process.env.MESSAGECENTRAL_EMAIL || !process.env.MESSAGECENTRAL_PASSWORD) {
-      console.log('⚠️ MessageCentral credentials not configured, using mock response');
-      return res.status(200).json({
-        success: true,
-        message: 'OTP sent successfully (mock response - configure MessageCentral credentials for real SMS)',
-        data: {
-          verificationId: `mock_${Date.now()}`,
-          mobileNumber: formattedNumber
-        }
+      console.log('❌ MessageCentral credentials not configured');
+      return res.status(500).json({
+        success: false,
+        message: 'OTP service not configured. Please contact administrator.'
       });
     }
     
@@ -108,15 +104,10 @@ router.post('/otp/verify', async (req, res) => {
     
     // Check if MessageCentral credentials are available
     if (!process.env.MESSAGECENTRAL_CUSTOMER_ID || !process.env.MESSAGECENTRAL_EMAIL || !process.env.MESSAGECENTRAL_PASSWORD) {
-      console.log('⚠️ MessageCentral credentials not configured, using mock verification');
-      return res.status(200).json({
-        success: true,
-        message: 'OTP verified successfully (mock response - configure MessageCentral credentials for real verification)',
-        data: {
-          isNewUser: true,
-          phoneNumber: formattedNumber,
-          firebaseUid: 'mock_verified'
-        }
+      console.log('❌ MessageCentral credentials not configured');
+      return res.status(500).json({
+        success: false,
+        message: 'OTP service not configured. Please contact administrator.'
       });
     }
     
