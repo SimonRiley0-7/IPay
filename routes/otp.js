@@ -2,7 +2,16 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const messageCentralService = require('../services/messageCentralService');
 const User = require('../models/User');
-const { generateJWTToken } = require('../middleware/auth');
+const jwt = require('jsonwebtoken');
+
+// Generate JWT token locally to avoid Firebase dependency
+const generateJWTToken = (userId) => {
+  return jwt.sign(
+    { userId },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '30d' }
+  );
+};
 
 const router = express.Router();
 
