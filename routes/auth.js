@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const router = express.Router();
 const User = require('../models/User');
 
-// Temporary OTP endpoints (until separate OTP routes are deployed)
+// OTP endpoints with real MessageCentral integration
 router.post('/otp/send', async (req, res) => {
   try {
     let { mobileNumber } = req.body;
@@ -33,16 +33,37 @@ router.post('/otp/send', async (req, res) => {
       });
     }
     
-    console.log(`📱 Mock OTP sent to: +91${mobileNumber}`);
+    const formattedNumber = `+91${mobileNumber}`;
+    console.log(`📱 Sending OTP to: ${formattedNumber}`);
     
-    res.status(200).json({
-      success: true,
-      message: 'OTP sent successfully (mock response)',
-      data: {
-        verificationId: `mock_${Date.now()}`,
-        mobileNumber: `+91${mobileNumber}`
-      }
-    });
+    // Check if MessageCentral credentials are available
+    if (!process.env.MESSAGECENTRAL_CUSTOMER_ID || !process.env.MESSAGECENTRAL_EMAIL || !process.env.MESSAGECENTRAL_PASSWORD) {
+      console.log('❌ MessageCentral credentials not configured');
+      return res.status(500).json({
+        success: false,
+        message: 'OTP service not configured. Please contact administrator.'
+      });
+    }
+    
+    // Use real MessageCentral service
+    const messageCentralService = require('../services/messageCentralService');
+    const result = await messageCentralService.sendOTP(formattedNumber, '+91');
+    
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: 'OTP sent successfully',
+        data: {
+          verificationId: result.verificationId,
+          mobileNumber: formattedNumber
+        }
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message || 'Failed to send OTP'
+      });
+    }
   } catch (error) {
     console.error('OTP send error:', error);
     res.status(500).json({
@@ -78,17 +99,38 @@ router.post('/otp/verify', async (req, res) => {
       });
     }
     
-    console.log(`🔍 Mock OTP verification for: +91${mobileNumber}`);
+    const formattedNumber = `+91${mobileNumber}`;
+    console.log(`🔍 Verifying OTP for: ${formattedNumber}`);
     
-    res.status(200).json({
-      success: true,
-      message: 'OTP verified successfully (mock response)',
-      data: {
-        isNewUser: true,
-        phoneNumber: `+91${mobileNumber}`,
-        firebaseUid: 'mock_verified'
-      }
-    });
+    // Check if MessageCentral credentials are available
+    if (!process.env.MESSAGECENTRAL_CUSTOMER_ID || !process.env.MESSAGECENTRAL_EMAIL || !process.env.MESSAGECENTRAL_PASSWORD) {
+      console.log('❌ MessageCentral credentials not configured');
+      return res.status(500).json({
+        success: false,
+        message: 'OTP service not configured. Please contact administrator.'
+      });
+    }
+    
+    // Use real MessageCentral service
+    const messageCentralService = require('../services/messageCentralService');
+    const verifyResult = await messageCentralService.verifyOTP(verificationId, otp);
+    
+    if (verifyResult.success) {
+      res.status(200).json({
+        success: true,
+        message: 'OTP verified successfully',
+        data: {
+          isNewUser: true,
+          phoneNumber: formattedNumber,
+          firebaseUid: 'messagecentral_verified'
+        }
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: verifyResult.message || 'Invalid OTP'
+      });
+    }
   } catch (error) {
     console.error('OTP verify error:', error);
     res.status(500).json({
