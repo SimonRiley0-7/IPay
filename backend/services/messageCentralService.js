@@ -6,13 +6,12 @@ class MessageCentralService {
     this.baseUrl = 'https://cpaas.messagecentral.com';
     this.customerId = process.env.MESSAGECENTRAL_CUSTOMER_ID;
     this.email = process.env.MESSAGECENTRAL_EMAIL;
-    this.password = process.env.MESSAGECENTRAL_PASSWORD;
-    this.senderId = process.env.MESSAGECENTRAL_SENDER_ID || 'iPay';
+    this.password = process.env.MESSAGECENTRAL_PASSWORD
     this.authToken = null;
     this.tokenExpiry = null;
   }
 
-  // Generate authentication token
+  // Generate authentication token (matching Next.js implementation)
   async getAuthToken() {
     try {
       // Check if we have a valid token
@@ -22,15 +21,18 @@ class MessageCentralService {
 
       console.log('🔄 Generating new MessageCentral auth token...');
       
-      const key = Buffer.from(this.password).toString('base64');
+      const base64String = Buffer.from(this.password).toString('base64');
       
       const response = await axios.get(`${this.baseUrl}/auth/v1/authentication/token`, {
         params: {
+          country: 'IN',
           customerId: this.customerId,
-          key: key,
-          scope: 'NEW',
-          country: 'IN', // India
-          email: this.email
+          email: this.email,
+          key: base64String,
+          scope: 'NEW'
+        },
+        headers: {
+          'accept': '*/*'
         }
       });
 
@@ -49,73 +51,78 @@ class MessageCentralService {
     }
   }
 
-  // Send OTP to mobile number
+  // Send OTP to mobile number (matching Next.js implementation)
   async sendOTP(mobileNumber, countryCode = '+91') {
     try {
       const authToken = await this.getAuthToken();
       
-      // Remove + from country code if present
-      const cleanCountryCode = countryCode.replace('+', '');
-      
-      // Remove + from mobile number if present
-      const cleanMobileNumber = mobileNumber.replace('+', '').replace(countryCode, '');
+      // Extract country code and mobile number like Next.js
+      const cleanCountryCode = countryCode.substring(1); // Remove + from +91
+      const cleanMobileNumber = mobileNumber.substring(3); // Remove +91 from +91XXXXXXXXXX
       
       console.log(`📱 Sending OTP to ${countryCode}${cleanMobileNumber}`);
 
-      const response = await axios.post(`${this.baseUrl}/verification/v3/send`, {
-        countryCode: cleanCountryCode,
-        flowType: 'SMS',
-        mobileNumber: cleanMobileNumber,
-        senderId: this.senderId,
-        type: 'SMS',
-        message: `Your iPay verification code is: {{otp}}. Valid for 5 minutes. Do not share this code with anyone.`,
-        messageType: 'OTP'
-      }, {
+      const response = await axios.post(`${this.baseUrl}/verification/v3/send`, {}, {
+        params: {
+          countryCode: cleanCountryCode,
+          customerId: this.customerId,
+          flowType: 'SMS',
+          mobileNumber: cleanMobileNumber
+        },
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'accept': '*/*',
+          'authToken': authToken
         }
       });
 
-      if (response.data && response.data.verificationId) {
+      if (response.data && response.data.responseCode === 200) {
         console.log('✅ OTP sent successfully via MessageCentral');
         return {
           success: true,
-          verificationId: response.data.verificationId,
+          verificationId: response.data.data.verificationId,
           mobileNumber: `${countryCode}${cleanMobileNumber}`,
           message: 'OTP sent successfully'
         };
       } else {
-        throw new Error('Invalid response from MessageCentral');
+        throw new Error(response.data.message || 'Invalid response from MessageCentral');
       }
     } catch (error) {
       console.error('❌ MessageCentral send OTP error:', error.response?.data || error.message);
       return {
         success: false,
-        message: 'Failed to send OTP. Please try again.',
+        message: error.response?.data?.message || 'Failed to send OTP. Please try again.',
         error: error.response?.data || error.message
       };
     }
   }
 
-  // Verify OTP
-  async verifyOTP(verificationId, otp) {
+  // Verify OTP (matching Next.js implementation)
+  async verifyOTP(verificationId, otp, mobileNumber, countryCode = '+91') {
     try {
       const authToken = await this.getAuthToken();
       
+      // Extract country code and mobile number like Next.js
+      const cleanCountryCode = countryCode.substring(1); // Remove + from +91
+      const cleanMobileNumber = mobileNumber.substring(3); // Remove +91 from +91XXXXXXXXXX
+      
       console.log(`🔍 Verifying OTP for verification ID: ${verificationId}`);
 
-      const response = await axios.post(`${this.baseUrl}/verification/v3/validate`, {
-        verificationId: verificationId,
-        otp: otp
-      }, {
+      const response = await axios.get(`${this.baseUrl}/verification/v3/validateOtp`, {
+        params: {
+          countryCode: cleanCountryCode,
+          mobileNumber: cleanMobileNumber,
+          verificationId: verificationId,
+          customerId: this.customerId,
+          code: otp
+        },
         headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
+          'accept': 'application/json',
+          'authToken': authToken
         }
       });
 
-      if (response.data && response.data.responseCode === '200') {
+      if (response.data && (response.data.responseCode === 200 || response.data.message === 'SUCCESS' || response.data.data?.status === 'VERIFIED')) {
         console.log('✅ OTP verified successfully via MessageCentral');
         return {
           success: true,
@@ -125,7 +132,7 @@ class MessageCentralService {
         console.log('❌ OTP verification failed:', response.data);
         return {
           success: false,
-          message: 'Invalid OTP. Please try again.',
+          message: response.data.message || 'Invalid OTP. Please try again.',
           error: response.data
         };
       }
@@ -133,7 +140,7 @@ class MessageCentralService {
       console.error('❌ MessageCentral verify OTP error:', error.response?.data || error.message);
       return {
         success: false,
-        message: 'OTP verification failed. Please try again.',
+        message: error.response?.data?.message || 'OTP verification failed. Please try again.',
         error: error.response?.data || error.message
       };
     }
